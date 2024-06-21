@@ -4,6 +4,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from .base import metadata, Base
 from app.crud.unit import get_unit
 
+
 class Indicator(Base):
     __tablename__ = "indicators"
     id = Column(Integer, primary_key=True, index=True)
@@ -11,7 +12,7 @@ class Indicator(Base):
     unit_id = Column(Integer, ForeignKey("units.id"))
     unit = relationship("Unit")
     __table_args__ = (UniqueConstraint('name', 'unit_id', name='_name_unit_uc'),)
-    
+
 
 class AggregatedIndicatorValue(Base):
     __tablename__ = "aggregated_indicator_values"
@@ -22,6 +23,7 @@ class AggregatedIndicatorValue(Base):
     value = Column(Float, nullable=False)
     source = Column(String, nullable=False)
     indicator = relationship("Indicator")
+
 
 class DetailedIndicatorValue(Base):
     __tablename__ = "detailed_indicator_values"

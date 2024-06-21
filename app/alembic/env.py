@@ -24,6 +24,7 @@ config = context.config
 from app.models.base import Base
 from app.models.indicator import Indicator, DetailedIndicatorValue, AggregatedIndicatorValue
 from app.models.unit import Unit
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -43,9 +44,7 @@ def run_migrations_offline():
     """
     # url = config.get_main_option("sqlalchemy.url")
     url = "postgresql+psycopg2://postgres:postgres@10.200.0.13/socdem"
-    context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True
-    )
+    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
 
     with context.begin_transaction():
         context.run_migrations()

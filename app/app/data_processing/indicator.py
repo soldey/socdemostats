@@ -1,8 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.crud import (
-    unit as unit_crud,
-    indicator as indicator_crud)
-from app.schemas import (indicator as indicator_schemas, unit as unit_schemas)
+from app.crud import unit as unit_crud, indicator as indicator_crud
+from app.schemas import indicator as indicator_schemas, unit as unit_schemas
 from fastapi import HTTPException
 
 

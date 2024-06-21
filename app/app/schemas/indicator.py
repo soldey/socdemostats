@@ -4,12 +4,14 @@ from app.schemas.unit import UnitResponse
 from app.models.base import metadata
 from app.models.unit import Unit
 from app.crud.unit import get_unit
+
 # from sqlalchemy.ext.hybrid import hybrid_property
 
 
 class IndicatorCreateRequest(BaseModel):
     name: str
     unit_id: int
+
 
 class IndicatorShortDescriptionResponse(BaseModel):
     id: int
@@ -36,10 +38,12 @@ class IndicatorShortDescriptionResponse(BaseModel):
     #         }
     #     }
 
+
 class IndicatorAvailability(BaseModel):
     year: int
     territory_id: int
     source: str
+
 
 class IndicatorFullDescriptionResponse(BaseModel):
     id: int
@@ -48,10 +52,12 @@ class IndicatorFullDescriptionResponse(BaseModel):
     detailed_availability: List[IndicatorAvailability]
     aggregated_availability: List[IndicatorAvailability]
 
+
 class LoadIndicatorAggregatedRequest(BaseModel):
     year: int
     value: float
     source: str
+
 
 class IndicatorAggregatedResponse(BaseModel):
     id: int
@@ -63,11 +69,13 @@ class IndicatorAggregatedResponse(BaseModel):
     source: str
     value: float
 
+
 class IndicatorDetailedData(BaseModel):
     age_start: int
     age_end: int
     male: Optional[float]
     female: Optional[float]
+
 
 class LoadIndicatorDetailedRequest(BaseModel):
     indicator_id: int
@@ -76,6 +84,7 @@ class LoadIndicatorDetailedRequest(BaseModel):
     year: int
     source: str
     data: List[IndicatorDetailedData]
+
 
 class IndicatorDetailedResponse(BaseModel):
     id: int
