@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud import indicator as indicator_crud, unit as unit_crud
 from app.schemas import indicator as schemas
 from app.db.session import get_db
-from app.data_processing.indicator import build_new_indicator
 
 router = APIRouter()
 
