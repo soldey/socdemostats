@@ -1,0 +1,579 @@
+openapi: 3.0.0
+info:
+  title: Demographics and SocioDemographic API
+  version: 1.0.0
+  description: API for managing and retrieving demographics and socio-demographic data
+
+tags:
+  - name: indicators
+    description: Socidemographic factual statistics
+  - name: population
+    description: Population statistics as a distinct indicator
+  - name : units
+
+paths:
+  /indicators:
+    get:
+      summary: Get all indicators
+      tags: 
+        - indicators
+      responses:
+        '200':
+          description: Successful response with all indicators
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IndicatorShortDescriptionResponse'
+    post: 
+      summary: Create new indicator
+      tags: 
+        - indicators
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndicatorCreateRequest'
+      responses:
+        '200':
+          description: Successful indicator creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndicatorShortDescriptionResponse'
+        '400':
+          description: Bad Request - The request body is invalid
+  /indicators/{indicator_id}:
+    get:
+      summary: Get indicator description and availability
+      tags: 
+        - indicators
+      parameters:
+        - name: indicator_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response with indicator description
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IndicatorFullDescriptionResponse'
+  /indicators/{indicator_id}/{territory_id}:
+    get:
+      summary: Get aggregated indicator values for a territory
+      tags: 
+        - indicators
+      parameters:
+        - name: indicator_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: territory_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: year
+          in: query
+          required: false
+          description: Year, if empty - values for all years would be returned
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response indicator values for a territory
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IndicatorAggregatedResponse'
+    post: 
+      summary: Load values for indicator
+      tags: 
+        - indicators
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoadIndicatorAggregatedRequest'
+      responses:
+        '200':
+          description: Successful indicator load
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndicatorAggregatedResponse'
+        '400':
+          description: Bad Request - The request body is invalid
+  /indicators/{indicator_id}/{territory_id}/details:
+    get:
+      summary: Get detailed indicator values for a territory
+      tags: 
+        - indicators
+      parameters:
+        - name: indicator_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: territory_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: year
+          in: query
+          required: false
+          description: Year, if empty - values for all years would be returned
+          schema:
+            type: integer        
+      responses:
+        '200':
+          description: Successful response indicator values for a territory
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IndicatorDetailedResponse'
+    post: 
+      summary: Load detailed values for indicator
+      tags: 
+        - indicators
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/LoadIndicatorDetailedRequest'
+      responses:
+        '200':
+          description: Successful indicator load
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IndicatorDetailedResponse'
+        '400':
+          description: Bad Request - The request body is invalid
+  /population/{territory_id}:
+    get:
+      summary: Get population for territory
+      tags: 
+        - population
+      parameters:
+        - name: territory_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: year
+          in: query
+          required: false
+          description: Year, if empty - values for all years would be returned
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful reposnse with territory population
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IndicatorAggregatedResponse'
+  /population/{territory_id}/details:
+    get:
+      summary: Get detailed population for territory
+      tags: 
+        - population
+      parameters:
+        - name: territory_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: year
+          in: query
+          required: false
+          description: Year, if empty - values for all years would be returned
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful reposnse with territory population
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PopualtionDetailedResponse'
+  
+  /units:
+    get:
+      summary: Get all units
+      tags: 
+        - units
+      responses:
+        '200':
+          description: Successful response with all units
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UnitResponse'
+    post: 
+      summary: Create new unit
+      tags: 
+        - units
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UnitCreateRequest'
+      responses:
+        '200':
+          description: Successful creation of a unit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitResponse'
+        '400':
+          description: Bad Request - The request body is invalid
+
+components:
+  schemas:
+    UnitCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+    UnitResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    IndicatorCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        unit_id:
+          type: integer
+    IndicatorShortDescriptionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        unit:
+          type: string
+    IndicatorFullDescriptionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        unit:
+          type: string
+        availability:
+          type: array
+          items:
+            type: object
+            properties:
+              year:
+                type: integer
+              territory_id:
+                type: integer
+              types:
+                type: array
+                items:
+                  type: string
+                  example:
+                    - 'aggregated'
+                    - 'detailed'
+              sources:
+                type: array
+                items:
+                  type: string
+                example:
+                  - 'census_data'
+                  - 'synthesized'
+    LoadIndicatorAggregatedRequest:
+      type: object
+      properties:
+        territory_id:
+          type: integer
+        indicator_id:
+          type: integer
+        unit_id:
+          type: integer
+        value:
+          type: number
+          example: 100000
+        year:
+          type: integer
+          example: 2024
+        source:
+          type: string
+          example: 'Петростат'
+    IndicatorAggregatedResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        territory_id:
+          type: integer
+        name:
+          type: string
+          example: 'Численность населения'
+        unit:
+          type: string
+          example: 'человек'
+        value:
+          type: integer
+          example: 100000
+        year:
+          type: integer
+          example: 2024
+        source:
+          type: string
+          example: 'Петростат'
+    LoadIndicatorDetailedRequest:
+      type: object
+      properties:
+        territory_id:
+          type: integer
+        indicator_id:
+          type: integer
+        unit_id:
+          type: integer
+        year:
+          type: integer
+          example: 2024
+        source:
+          type: string
+          example: 'Петростат'
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              age_start:
+                type: integer
+                example: 20
+              age_end:
+                type: integer
+                example: 20
+              male:
+                type: number
+                example: 100
+              female:
+                type: number
+                example: 120
+    IndicatorDetailedResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        territory_id:
+          type: integer
+        name:
+          type: string
+          example: 'Уровень рождаемости'
+        unit:
+          type: string
+          example: 'процент'
+        year:
+          type: integer
+          example: 2024
+        source:
+          type: string
+          example: 'Петростат'
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              age_start:
+                type: integer
+                example: 20
+              age_end:
+                type: integer
+                example: 20
+              male:
+                type: number
+                example: 100
+              female:
+                type: number
+                example: 120
+    PopualtionDetailedResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        territory_id:
+          type: integer
+        name:
+          type: string
+          example: 'Численность населения'
+        unit:
+          type: string
+          example: 'человек'
+        year:
+          type: integer
+          example: 2024
+        source:
+          type: string
+          example: 'Синтезировано'
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              age_start:
+                type: integer
+                example: 20
+              age_end:
+                type: integer
+                example: 30
+              male:
+                type: number
+                example: null
+              female:
+                type: number
+                example: 0.5
+    PopulationResponse:
+      type: object
+      properties:
+        territory_id:
+          type: integer
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              year:
+                type: integer
+              population:
+                type: object
+                properties:
+                  age_start:
+                    type: integer
+                  age_end:
+                    type: integer
+                  male:
+                    type: integer
+                  female:
+                    type: integer
+    DemographicsResponse:
+      type: object
+      properties:
+        territory_id:
+          type: integer
+        forecast_type:
+          type: string
+        demographics:
+          type: array
+          items:
+            type: object
+            properties:
+              age:
+                type: integer
+              male:
+                type: integer
+              female:
+                type: integer
+
+    DemographicsUploadRequest:
+      type: object
+      properties:
+        forecast_type:
+          type: string
+          enum: [positive, negative, normal]
+        year:
+          type: integer
+        living_building_id:
+          type: integer
+        demographics:
+          type: array
+          items:
+            type: object
+            properties:
+              age:
+                type: integer
+              male:
+                type: integer
+              female:
+                type: integer
+
+    SocioDemographicStatsUploadRequest:
+      type: object
+      properties:
+        territory_mapping_id:
+          type: integer
+        indicator_type:
+          type: string
+        year:
+          type: integer
+        age_group_start:
+          type: integer
+        age_group_end:
+          type: integer
+        gender:
+          type: string
+        value:
+          type: number
+
+    SocioDemographicStatsResponse:
+      type: object
+      properties:
+        territory_id:
+          type: integer
+        territory_type_id:
+          type: integer
+        indicator_type:
+          type: string
+        year:
+          type: integer
+        statistics:
+          type: array
+          items:
+            type: object
+            properties:
+              age_group_start:
+                type: integer
+              age_group_end:
+                type: integer
+              gender:
+                type: string
+              value:
+                type: number
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: 'Not Found - The specified resource was not found'

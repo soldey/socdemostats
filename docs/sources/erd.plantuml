@@ -1,0 +1,75 @@
+@startuml ERD 
+' Таблица с данными о домиках для расселятора и посмотреть что там еще ему надо
+entity "LivingBuildingPopulation" as d01 {
+  PRIMARY KEY (living_building_id, age, gender, year, forecast_type)
+  *living_building_id : number
+  *year : number
+  *forecast_type : string
+  --
+  *age : number
+  *gender : string
+  *count : number
+}
+note left of d01: Partitioned by *year* and *forecast_type*\nSecondary indexes on *year*, *gender*, *forecast_type*
+note right of d01: 1 mio houses * 25 y * 3 types * 100 ages * 2 genders =~ \n =~ 15*10^9 rows
+
+
+entity "LivingBuildingToTerritoryMapping" as am01 {
+  PRIMARY KEY (id)
+  *id : number <<generated>>
+  *living_building_id : number
+  --
+  ' *year : number
+  *territory_id: number
+}
+note left of am01: Secondary index on *year*, *territory_id*
+note right of am01: Denormalize data from urban_db to perfom aggregations\nby different administrative units
+
+entity "SocioDemographicDetailedStats" as sd01 {
+  PRIMARY KEY (id)
+  *id: number <<generated>>
+  *territory_id: number
+  *year: number
+  *indicator_id: number <<FK>>
+  --
+  *age_group_start: number
+  *age_group_end: number
+  *gender: string
+  *value: number
+  *source: string
+}
+
+note left of sd01: Secondary index on *indicator_id*, *territory_id*, *year*
+
+entity "SocioDemographicAggregatedStats" as sd02 {
+  PRIMARY KEY (id)
+  *id: number <<generated>>
+  *territory_id: number
+  *year: number
+  *indicator_id: number <<FK>>
+  --
+  *value: number
+  *source: string
+}
+
+note right of sd02: Secondary index on *indicator_id*, *territory_id*, *year*
+
+entity "Indicator" as in01 {
+  PRIMARY KEY (indicator_id)
+  *indicator_id: number <<generated>>
+  *name: string
+  *measurement_unit_id: number <<FK>>
+}
+
+entity "MeasurementUnit" as ut01{
+  PRIMARY KEY (measurement_unit_id)
+  *measurement_unit_id: number <<generated>>
+  *name: string
+
+}
+sd01 }|-d-|{ in01
+sd02 }|-d-|{ in01
+in01 |o-d-|{ ut01
+d01 |o-d-|{ am01
+' sd01 }|-u-|{ am01
+@enduml
