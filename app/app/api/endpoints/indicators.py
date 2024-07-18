@@ -115,3 +115,29 @@ async def load_aggregated_indicator_values(
             )
         )
     return response
+
+
+@router.get("/{indicator_id}/{territory_id}/detailed", response_model=list[schemas.IndicatorDetailedResponse])
+async def read_detailed_indicator_values(
+    indicator_id: int, territory_id: int, year: int | None = None, db: AsyncSession = Depends(get_db)
+):
+    values = await indicator_crud.get_detailed_indicator_values(db, indicator_id, territory_id, year)
+    if values is None:
+        raise HTTPException(status_code=404, detail="Values not found")
+    return values
+
+
+@router.post("/{indicator_id}/{territory_id}/detailed", response_model=list[schemas.IndicatorDetailedResponse])
+async def create_detailed_indicator_values(
+    indicator_id: int,
+    territory_id: int,
+    request: schemas.LoadIndicatorDetailedRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        values = await indicator_crud.load_detailed_indicator_values(
+            db=db, indicator_id=indicator_id, territory_id=territory_id, request=request
+        )
+        return values
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

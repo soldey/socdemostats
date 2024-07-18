@@ -78,16 +78,12 @@ class IndicatorDetailedData(BaseModel):
 
 
 class LoadIndicatorDetailedRequest(BaseModel):
-    indicator_id: int
-    territory_id: int
-    unit_id: int
     year: int
     source: str
     data: List[IndicatorDetailedData]
 
 
 class IndicatorDetailedResponse(BaseModel):
-    id: int
     indicator_id: int
     territory_id: int
     unit: str

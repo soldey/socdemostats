@@ -113,3 +113,100 @@ async def get_aggregated_indicator_values(db: AsyncSession, indicator_id: int, t
         query = query.where(indicator_models.AggregatedIndicatorValue.year == year)
     result = await db.execute(query)
     return result.scalars().all()
+
+
+async def get_detailed_indicator_values(
+    db: AsyncSession, indicator_id: int, territory_id: int, year: int | None = None
+) -> list[schemas.IndicatorDetailedResponse] | None:
+    query = (
+        select(indicator_models.DetailedIndicatorValue)
+        .options(joinedload(indicator_models.DetailedIndicatorValue.indicator))
+        .filter(
+            indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
+            indicator_models.DetailedIndicatorValue.territory_id == territory_id,
+        )
+    )
+
+    if year is not None:
+        query = query.filter(indicator_models.DetailedIndicatorValue.year == year)
+
+    result = await db.execute(query)
+    values = result.scalars().all()
+
+    if not values:
+        return None
+
+    # Group by year if year is None
+    values_by_year: dict[int, list[schemas.DetailedIndicatorValue]] = {}
+    for value in values:
+        if value.year not in values_by_year:
+            values_by_year[value.year] = []
+        values_by_year[value.year].append(value)
+
+    responses = []
+    for year, values in values_by_year.items():
+        first_value = values[0]
+        unit = await first_value.indicator.awaitable_attrs.unit
+        response = schemas.IndicatorDetailedResponse(
+            indicator_id=first_value.indicator_id,
+            territory_id=first_value.territory_id,
+            unit=unit.unit_name,
+            year=year,
+            source=first_value.source,
+            data=[
+                schemas.IndicatorDetailedData(
+                    age_start=value.age_start, age_end=value.age_end, male=value.male, female=value.female
+                )
+                for value in values
+            ],
+        )
+        responses.append(response)
+
+    return responses
+
+
+async def load_detailed_indicator_values(
+    db: AsyncSession, indicator_id: int, territory_id: int, request: schemas.LoadIndicatorDetailedRequest
+) -> list[indicator_models.DetailedIndicatorValue]:
+    for data in request.data:
+        query = (
+            select(indicator_models.DetailedIndicatorValue)
+            .options(joinedload(indicator_models.DetailedIndicatorValue.indicator))
+            .filter(
+                indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
+                indicator_models.DetailedIndicatorValue.territory_id == territory_id,
+                indicator_models.DetailedIndicatorValue.age_start == data.age_start,
+                indicator_models.DetailedIndicatorValue.age_end == data.age_end,
+                indicator_models.DetailedIndicatorValue.year == request.year,
+            )
+        )
+        result = await db.execute(query)
+        if result.scalars().all():
+            await db.execute(
+                update(indicator_models.DetailedIndicatorValue)
+                .where(
+                    indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
+                    indicator_models.DetailedIndicatorValue.territory_id == territory_id,
+                    indicator_models.DetailedIndicatorValue.age_start == data.age_start,
+                    indicator_models.DetailedIndicatorValue.age_end == data.age_end,
+                    indicator_models.DetailedIndicatorValue.year == request.year,
+                )
+                .values(male=data.male, female=data.female)
+            )
+
+        else:
+            value = indicator_models.DetailedIndicatorValue(
+                indicator_id=indicator_id,
+                territory_id=territory_id,
+                year=request.year,
+                age_start=data.age_start,
+                age_end=data.age_end,
+                source=request.source,
+                male=data.male,
+                female=data.female,
+            )
+
+            db.add(value)
+    await db.commit()
+
+    return await get_detailed_indicator_values(db, indicator_id, territory_id, year=request.year)

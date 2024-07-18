@@ -1,5 +1,6 @@
 from sqlalchemy import Table, Column, Integer, String, ForeignKey, Float, UniqueConstraint
 from sqlalchemy.orm import relationship
+from sqlalchemy.schema import CheckConstraint
 from sqlalchemy.ext.hybrid import hybrid_property
 from .base import metadata, Base
 from app.crud.unit import get_unit
@@ -33,6 +34,9 @@ class DetailedIndicatorValue(Base):
     year = Column(Integer, nullable=False, index=True, unique=False)
     age_start = Column(Integer, nullable=False)
     age_end = Column(Integer, nullable=False)
-    gender = Column(String, nullable=True)
     source = Column(String, nullable=False)
     indicator = relationship("Indicator")
+    male = Column(Float, nullable=True)
+    female = Column(Float, nullable=True)
+
+    __table_args__ = (CheckConstraint('coalesce(male , female ) is not null'),)
