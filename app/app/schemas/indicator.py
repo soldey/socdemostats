@@ -72,7 +72,7 @@ class IndicatorAggregatedResponse(BaseModel):
 
 class IndicatorDetailedData(BaseModel):
     age_start: int
-    age_end: int
+    age_end: int | None
     male: Optional[float]
     female: Optional[float]
 

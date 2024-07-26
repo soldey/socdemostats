@@ -125,6 +125,7 @@ async def get_detailed_indicator_values(
             indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
             indicator_models.DetailedIndicatorValue.territory_id == territory_id,
         )
+        .order_by(indicator_models.DetailedIndicatorValue.age_start)
     )
 
     if year is not None:

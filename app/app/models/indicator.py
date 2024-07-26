@@ -32,11 +32,14 @@ class DetailedIndicatorValue(Base):
     indicator_id = Column(Integer, ForeignKey("indicators.id"), index=True, unique=False)
     territory_id = Column(Integer, nullable=False, index=True, unique=False)
     year = Column(Integer, nullable=False, index=True, unique=False)
-    age_start = Column(Integer, nullable=False)
-    age_end = Column(Integer, nullable=False)
+    age_start = Column(Integer, nullable=True)
+    age_end = Column(Integer, nullable=True)
     source = Column(String, nullable=False)
     indicator = relationship("Indicator")
     male = Column(Float, nullable=True)
     female = Column(Float, nullable=True)
 
-    __table_args__ = (CheckConstraint('coalesce(male , female ) is not null'),)
+    __table_args__ = (
+        # CheckConstraint('coalesce(male , female ) is not null'),
+        CheckConstraint('coalesce(age_start , age_end ) is not null'),
+        )
