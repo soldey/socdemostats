@@ -43,7 +43,7 @@ def run_migrations_offline():
     script output.
     """
     # url = config.get_main_option("sqlalchemy.url")
-    url = "postgresql+psycopg2://postgres:postgres@10.200.0.13/socdem"
+    url = "postgresql+psycopg2://postgres:postgres@db/socdem"
     context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
 
     with context.begin_transaction():
