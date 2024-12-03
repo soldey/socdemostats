@@ -41,9 +41,9 @@ class IndicatorShortDescriptionResponse(BaseModel):
 
 class IndicatorAvailability(BaseModel):
     year: int
-    territory_id: Optional[int]
+    territory_id: Optional[int] = None
     source: str
-    oktmo: Optional[int]
+    oktmo: Optional[int] = None
 
 
 class IndicatorFullDescriptionResponse(BaseModel):
@@ -65,8 +65,8 @@ class IndicatorAggregatedResponse(BaseModel):
     indicator_id: int
     name: str
     unit: str
-    territory_id: Optional[int]
-    oktmo: Optional[int]
+    territory_id: Optional[int] = None
+    oktmo: Optional[int] = None
     year: int
     source: str
     value: float
@@ -87,8 +87,8 @@ class LoadIndicatorDetailedRequest(BaseModel):
 
 class IndicatorDetailedResponse(BaseModel):
     indicator_id: int
-    territory_id: int
-    oktmo: Optional[int]
+    territory_id: Optional[int] = None
+    oktmo: Optional[int] = None
     unit: str
     year: int
     source: str
