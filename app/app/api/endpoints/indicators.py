@@ -59,9 +59,11 @@ async def read_indicator_details(indicator_id: int, db: AsyncSession = Depends(g
 
 
 @router.get("/{indicator_id}/{territory_id}", response_model=list[schemas.IndicatorAggregatedResponse])
-async def read_aggregated_indicator_values(indicator_id: int, territory_id: int, db: AsyncSession = Depends(get_db)):
+async def read_aggregated_indicator_values(
+        indicator_id: int, territory_id: Optional[int] = None, oktmo: Optional[int] = None, db: AsyncSession = Depends(get_db)
+):
     indicators = await indicator_crud.get_aggregated_indicator_values(
-        db, indicator_id=indicator_id, territory_id=territory_id
+        db, indicator_id=indicator_id, territory_id=territory_id, oktmo=oktmo
     )
     response = []
     for i in indicators:
@@ -123,9 +125,13 @@ async def load_aggregated_indicator_values(
 
 @router.get("/{indicator_id}/{territory_id}/detailed", response_model=list[schemas.IndicatorDetailedResponse])
 async def read_detailed_indicator_values(
-    indicator_id: int, territory_id: int, year: int | None = None, db: AsyncSession = Depends(get_db)
+    indicator_id: int,
+        territory_id: Optional[int] = None,
+        oktmo: Optional[int] = None,
+        year: int | None = None,
+        db: AsyncSession = Depends(get_db)
 ):
-    values = await indicator_crud.get_detailed_indicator_values(db, indicator_id, territory_id, year)
+    values = await indicator_crud.get_detailed_indicator_values(db, indicator_id, territory_id, oktmo, year)
     if values is None:
         raise HTTPException(status_code=404, detail="Values not found")
     return values
