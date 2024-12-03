@@ -1,3 +1,6 @@
+from typing import Optional
+
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from app.models import indicator as indicator_models, unit as unit_models
@@ -48,7 +51,7 @@ async def get_aggregated_indicator_values_availability(db: AsyncSession, indicat
     )
 
     return [
-        {"year": row.year, "territory_id": row.territory_id, "source": row.source} for row in result.scalars().all()
+        {"year": row.year, "territory_id": row.territory_id, "source": row.source, "oktmo": row.oktmo} for row in result.scalars().all()
     ]
 
 
@@ -60,38 +63,49 @@ async def get_detailed_indicator_values_availability(db: AsyncSession, indicator
     )
 
     return [
-        {"year": row.year, "territory_id": row.territory_id, "source": row.source} for row in result.scalars().all()
+        {"year": row.year, "territory_id": row.territory_id, "source": row.source, "oktmo": row.oktmo} for row in result.scalars().all()
     ]
 
 
 async def create_aggregated_indicator_values(
     db: AsyncSession,
     indicator_id: int,
-    territory_id: int,
+    territory_id: Optional[int],
+    oktmo: Optional[int],
     indicator_values: list[schemas.LoadIndicatorAggregatedRequest],
 ):
+    if not territory_id and not oktmo:
+        raise HTTPException(400, "TERRITORY_ID_OR_OKTMO_NOT_PROVIDED")
     # indicator = await get_indicator(db, indicator_id)
     for indicator_value in indicator_values:
         query = select(indicator_models.AggregatedIndicatorValue).where(
             indicator_models.AggregatedIndicatorValue.indicator_id == indicator_id,
-            indicator_models.AggregatedIndicatorValue.territory_id == territory_id,
             indicator_models.AggregatedIndicatorValue.year == indicator_value.year,
         )
+        if oktmo:
+            query = query.where(indicator_models.AggregatedIndicatorValue.oktmo == oktmo)
+        else:
+            query = query.where(indicator_models.AggregatedIndicatorValue.territory_id == territory_id)
         result = await db.execute(query)
         if result.scalars().all():
-            await db.execute(
+            query = (
                 update(indicator_models.AggregatedIndicatorValue)
                 .where(
                     indicator_models.AggregatedIndicatorValue.indicator_id == indicator_id,
-                    indicator_models.AggregatedIndicatorValue.territory_id == territory_id,
                     indicator_models.AggregatedIndicatorValue.year == indicator_value.year,
                 )
-                .values(value=indicator_value.value, source=indicator_value.source)
             )
+            if oktmo:
+                query = query.where(indicator_models.AggregatedIndicatorValue.oktmo == oktmo)
+            else:
+                query = query.where(indicator_models.AggregatedIndicatorValue.territory_id == territory_id)
+            query = query.values(value=indicator_value.value, source=indicator_value.source)
+            await db.execute(query)
         else:
             db_indicator_aggregated_value = indicator_models.AggregatedIndicatorValue(
                 indicator_id=indicator_id,
                 territory_id=territory_id,
+                oktmo=oktmo,
                 year=indicator_value.year,
                 value=indicator_value.value,
                 source=indicator_value.source,
@@ -100,7 +114,15 @@ async def create_aggregated_indicator_values(
     await db.commit()
 
 
-async def get_aggregated_indicator_values(db: AsyncSession, indicator_id: int, territory_id: int, year: int = None):
+async def get_aggregated_indicator_values(
+        db: AsyncSession,
+        indicator_id: int,
+        territory_id: Optional[int],
+        oktmo: Optional[int],
+        year: int = None
+):
+    if not territory_id and not oktmo:
+        raise HTTPException(400, "TERRITORY_ID_OR_OKTMO_NOT_PROVIDED")
     query = (
         select(indicator_models.AggregatedIndicatorValue)
         .where(
@@ -111,23 +133,35 @@ async def get_aggregated_indicator_values(db: AsyncSession, indicator_id: int, t
     )
     if year:
         query = query.where(indicator_models.AggregatedIndicatorValue.year == year)
+    if oktmo:
+        query = query.where(indicator_models.AggregatedIndicatorValue.oktmo == oktmo)
+    else:
+        query = query.where(indicator_models.AggregatedIndicatorValue.territory_id == territory_id)
     result = await db.execute(query)
     return result.scalars().all()
 
 
 async def get_detailed_indicator_values(
-    db: AsyncSession, indicator_id: int, territory_id: int, year: int | None = None
+    db: AsyncSession, indicator_id: int, territory_id: Optional[int], oktmo: Optional[int], year: int | None = None
 ) -> list[schemas.IndicatorDetailedResponse] | None:
+    if not territory_id and not oktmo:
+        raise HTTPException(400, "TERRITORY_ID_OR_OKTMO_NOT_PROVIDED")
     query = (
         select(indicator_models.DetailedIndicatorValue)
         .options(joinedload(indicator_models.DetailedIndicatorValue.indicator))
-        .filter(
-            indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
-            indicator_models.DetailedIndicatorValue.territory_id == territory_id,
-        )
         .order_by(indicator_models.DetailedIndicatorValue.age_start)
     )
 
+    if oktmo:
+        query = query.filter(
+            indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
+            indicator_models.DetailedIndicatorValue.oktmo == oktmo,
+        )
+    else:
+        query = query.filter(
+            indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
+            indicator_models.DetailedIndicatorValue.territory_id == territory_id,
+        )
     if year is not None:
         query = query.filter(indicator_models.DetailedIndicatorValue.year == year)
 
@@ -151,6 +185,7 @@ async def get_detailed_indicator_values(
         response = schemas.IndicatorDetailedResponse(
             indicator_id=first_value.indicator_id,
             territory_id=first_value.territory_id,
+            oktmo=first_value.oktmo,
             unit=unit.unit_name,
             year=year,
             source=first_value.source,
@@ -167,8 +202,14 @@ async def get_detailed_indicator_values(
 
 
 async def load_detailed_indicator_values(
-    db: AsyncSession, indicator_id: int, territory_id: int, request: schemas.LoadIndicatorDetailedRequest
+    db: AsyncSession,
+    indicator_id: int,
+    territory_id: Optional[int],
+    oktmo: Optional[int],
+    request: schemas.LoadIndicatorDetailedRequest
 ) -> list[indicator_models.DetailedIndicatorValue]:
+    if not territory_id and not oktmo:
+        raise HTTPException(400, "TERRITORY_ID_OR_OKTMO_NOT_PROVIDED")
     for data in request.data:
         query = (
             select(indicator_models.DetailedIndicatorValue)
@@ -181,24 +222,46 @@ async def load_detailed_indicator_values(
                 indicator_models.DetailedIndicatorValue.year == request.year,
             )
         )
+
+        if oktmo:
+            query = query.filter(
+                indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
+                indicator_models.DetailedIndicatorValue.oktmo == oktmo,
+                indicator_models.DetailedIndicatorValue.age_start == data.age_start,
+                indicator_models.DetailedIndicatorValue.age_end == data.age_end,
+                indicator_models.DetailedIndicatorValue.year == request.year,
+            )
+        else:
+            query = query.filter(
+                indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
+                indicator_models.DetailedIndicatorValue.territory_id == territory_id,
+                indicator_models.DetailedIndicatorValue.age_start == data.age_start,
+                indicator_models.DetailedIndicatorValue.age_end == data.age_end,
+                indicator_models.DetailedIndicatorValue.year == request.year,
+            )
         result = await db.execute(query)
         if result.scalars().all():
-            await db.execute(
+            query = (
                 update(indicator_models.DetailedIndicatorValue)
                 .where(
                     indicator_models.DetailedIndicatorValue.indicator_id == indicator_id,
-                    indicator_models.DetailedIndicatorValue.territory_id == territory_id,
                     indicator_models.DetailedIndicatorValue.age_start == data.age_start,
                     indicator_models.DetailedIndicatorValue.age_end == data.age_end,
                     indicator_models.DetailedIndicatorValue.year == request.year,
                 )
                 .values(male=data.male, female=data.female)
             )
+            if oktmo:
+                query = query.where(indicator_models.DetailedIndicatorValue.oktmo == oktmo)
+            else:
+                query = query.where(indicator_models.DetailedIndicatorValue.territory_id == territory_id)
+            await db.execute(query)
 
         else:
             value = indicator_models.DetailedIndicatorValue(
                 indicator_id=indicator_id,
                 territory_id=territory_id,
+                oktmo=oktmo,
                 year=request.year,
                 age_start=data.age_start,
                 age_end=data.age_end,
@@ -210,4 +273,4 @@ async def load_detailed_indicator_values(
             db.add(value)
     await db.commit()
 
-    return await get_detailed_indicator_values(db, indicator_id, territory_id, year=request.year)
+    return await get_detailed_indicator_values(db, indicator_id, territory_id, oktmo, year=request.year)

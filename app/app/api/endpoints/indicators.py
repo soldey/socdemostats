@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud import indicator as indicator_crud, unit as unit_crud
@@ -82,8 +84,9 @@ async def read_aggregated_indicator_values(indicator_id: int, territory_id: int,
 @router.post("/{indicator_id}/{territory_id}", response_model=list[schemas.IndicatorAggregatedResponse])
 async def load_aggregated_indicator_values(
     indicator_id: int,
-    territory_id: int,
     indicator_values: list[schemas.LoadIndicatorAggregatedRequest],
+    territory_id: Optional[int] = None,
+    oktmo: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
 ):
     # unit = await unit_crud.get_unit(db, indicator_value.unit_id)
@@ -93,11 +96,11 @@ async def load_aggregated_indicator_values(
     # if not indicator:
     #     raise HTTPException(status_code=404, detail=f"Indicator with id {indicator_id} not found")
     indicator_values = await indicator_crud.create_aggregated_indicator_values(
-        db=db, indicator_id=indicator_id, territory_id=territory_id, indicator_values=indicator_values
+        db=db, indicator_id=indicator_id, territory_id=territory_id, oktmo=oktmo, indicator_values=indicator_values
     )
 
     indicators = await indicator_crud.get_aggregated_indicator_values(
-        db, indicator_id=indicator_id, territory_id=territory_id
+        db, indicator_id=indicator_id, territory_id=territory_id, oktmo=oktmo
     )
     response = []
     for i in indicators:
@@ -109,6 +112,7 @@ async def load_aggregated_indicator_values(
                 name=i.indicator.name,
                 unit=unit.unit_name,
                 territory_id=i.territory_id,
+                oktmo=i.oktmo,
                 year=i.year,
                 source=i.source,
                 value=i.value,
@@ -130,13 +134,14 @@ async def read_detailed_indicator_values(
 @router.post("/{indicator_id}/{territory_id}/detailed", response_model=list[schemas.IndicatorDetailedResponse])
 async def create_detailed_indicator_values(
     indicator_id: int,
-    territory_id: int,
     request: schemas.LoadIndicatorDetailedRequest,
+    territory_id: Optional[int] = None,
+    oktmo: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
 ):
     try:
         values = await indicator_crud.load_detailed_indicator_values(
-            db=db, indicator_id=indicator_id, territory_id=territory_id, request=request
+            db=db, indicator_id=indicator_id, territory_id=territory_id, oktmo=oktmo, request=request
         )
         return values
     except Exception as e:

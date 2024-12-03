@@ -24,6 +24,7 @@ class AggregatedIndicatorValue(Base):
     value = Column(Float, nullable=False)
     source = Column(String, nullable=False)
     indicator = relationship("Indicator")
+    oktmo = Column(Integer, nullable=True)
 
 
 class DetailedIndicatorValue(Base):
@@ -38,6 +39,7 @@ class DetailedIndicatorValue(Base):
     indicator = relationship("Indicator")
     male = Column(Float, nullable=True)
     female = Column(Float, nullable=True)
+    oktmo = Column(Integer, nullable=True)
 
     __table_args__ = (
         # CheckConstraint('coalesce(male , female ) is not null'),
