@@ -58,7 +58,7 @@ async def read_indicator_details(indicator_id: int, db: AsyncSession = Depends(g
     return response
 
 
-@router.get("/{indicator_id}/{territory_id}", response_model=list[schemas.IndicatorAggregatedResponse])
+@router.get("/{indicator_id}/aggregated", response_model=list[schemas.IndicatorAggregatedResponse])
 async def read_aggregated_indicator_values(
         indicator_id: int, territory_id: Optional[int] = None, oktmo: Optional[int] = None, db: AsyncSession = Depends(get_db)
 ):
@@ -83,7 +83,7 @@ async def read_aggregated_indicator_values(
     return response
 
 
-@router.post("/{indicator_id}/{territory_id}", response_model=list[schemas.IndicatorAggregatedResponse])
+@router.post("/{indicator_id}/aggregated", response_model=list[schemas.IndicatorAggregatedResponse])
 async def load_aggregated_indicator_values(
     indicator_id: int,
     indicator_values: list[schemas.LoadIndicatorAggregatedRequest],
