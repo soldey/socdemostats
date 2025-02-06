@@ -20,11 +20,11 @@ depends_on = None
 def upgrade() -> None:
     with op.batch_alter_table("detailed_indicator_values") as alter_table_detailed_indicators:
         alter_table_detailed_indicators.alter_column(
-            "detailed_indicator_values", "territory_id", nullable=True
+            "territory_id", nullable=True
         )
     with op.batch_alter_table("aggregated_indicator_values") as alter_table_aggregated_indicators:
         alter_table_aggregated_indicators.alter_column(
-            "aggregated_indicator_values", "territory_id", nullable=True
+            "territory_id", nullable=True
         )
 
 
