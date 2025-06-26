@@ -147,7 +147,7 @@ async def get_detailed_indicator_values(
     if not territory_id and not oktmo:
         raise HTTPException(400, "TERRITORY_ID_OR_OKTMO_NOT_PROVIDED")
     query = (
-        select(indicator_models.DetailedIndicatorValue).distinct()
+        select(indicator_models.DetailedIndicatorValue)
         .options(joinedload(indicator_models.DetailedIndicatorValue.indicator))
         .order_by(indicator_models.DetailedIndicatorValue.age_start)
     )
@@ -172,23 +172,23 @@ async def get_detailed_indicator_values(
         return None
 
     # Group by year if year is None
-    values_by_year: dict[int, list[schemas.DetailedIndicatorValue]] = {}
+    values_by_year: dict[[int, str], list[schemas.DetailedIndicatorValue]] = {}
     for value in values:
-        if value.year not in values_by_year:
-            values_by_year[value.year] = []
-        values_by_year[value.year].append(value)
+        if [value.year, value.source] not in values_by_year:
+            values_by_year[[value.year, value.source]] = []
+        values_by_year[[value.year, value.source]].append(value)
 
     responses = []
-    for year, values in values_by_year.items():
+    for params, values in values_by_year.items():
         first_value = values[0]
         unit = await first_value.indicator.awaitable_attrs.unit
         response = schemas.IndicatorDetailedResponse(
-            indicator_id=first_value.indicator_id,
+            indicator_id=indicator_id,
             territory_id=first_value.territory_id,
             oktmo=first_value.oktmo,
             unit=unit.unit_name,
-            year=year,
-            source=first_value.source,
+            year=params[0],
+            source=params[1],
             data=[
                 schemas.IndicatorDetailedData(
                     age_start=value.age_start, age_end=value.age_end, male=value.male, female=value.female
