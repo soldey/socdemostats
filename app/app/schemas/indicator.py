@@ -93,3 +93,7 @@ class IndicatorDetailedResponse(BaseModel):
     year: int
     source: str
     data: List[IndicatorDetailedData]
+
+class IndicatorUniqueDetailedPair(BaseModel):
+    year: int
+    source: str

@@ -172,14 +172,15 @@ async def get_detailed_indicator_values(
         return None
 
     # Group by year if year is None
-    values_by_year: dict[[int, str], list[schemas.DetailedIndicatorValue]] = {}
+    values_by_year: dict[schemas.IndicatorUniqueDetailedPair, list[schemas.DetailedIndicatorValue]] = {}
     for value in values:
-        if [value.year, value.source] not in values_by_year:
-            values_by_year[[value.year, value.source]] = []
-        values_by_year[[value.year, value.source]].append(value)
+        pair = schemas.IndicatorUniqueDetailedPair(year=value.year, source=value.source)
+        if pair not in values_by_year:
+            values_by_year[pair] = []
+        values_by_year[pair].append(value)
 
     responses = []
-    for params, values in values_by_year.items():
+    for pair, values in values_by_year.items():
         first_value = values[0]
         unit = await first_value.indicator.awaitable_attrs.unit
         response = schemas.IndicatorDetailedResponse(
@@ -187,8 +188,8 @@ async def get_detailed_indicator_values(
             territory_id=first_value.territory_id,
             oktmo=first_value.oktmo,
             unit=unit.unit_name,
-            year=params[0],
-            source=params[1],
+            year=pair.year,
+            source=pair.source,
             data=[
                 schemas.IndicatorDetailedData(
                     age_start=value.age_start, age_end=value.age_end, male=value.male, female=value.female
