@@ -97,3 +97,6 @@ class IndicatorDetailedResponse(BaseModel):
 class IndicatorUniqueDetailedPair(BaseModel):
     year: int
     source: str
+    
+    def __hash__(self):
+        return hash(self.year) + hash(self.source)
