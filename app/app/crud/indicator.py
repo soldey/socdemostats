@@ -147,7 +147,7 @@ async def get_detailed_indicator_values(
     if not territory_id and not oktmo:
         raise HTTPException(400, "TERRITORY_ID_OR_OKTMO_NOT_PROVIDED")
     query = (
-        select(distinct(indicator_models.DetailedIndicatorValue))
+        select(indicator_models.DetailedIndicatorValue).distinct()
         .options(joinedload(indicator_models.DetailedIndicatorValue.indicator))
         .order_by(indicator_models.DetailedIndicatorValue.age_start)
     )
