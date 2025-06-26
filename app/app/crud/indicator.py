@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, distinct
 from app.models import indicator as indicator_models, unit as unit_models
 from app.schemas import indicator as schemas
 from sqlalchemy.orm import selectinload, joinedload
@@ -147,7 +147,7 @@ async def get_detailed_indicator_values(
     if not territory_id and not oktmo:
         raise HTTPException(400, "TERRITORY_ID_OR_OKTMO_NOT_PROVIDED")
     query = (
-        select(indicator_models.DetailedIndicatorValue)
+        select(distinct(indicator_models.DetailedIndicatorValue))
         .options(joinedload(indicator_models.DetailedIndicatorValue.indicator))
         .order_by(indicator_models.DetailedIndicatorValue.age_start)
     )
